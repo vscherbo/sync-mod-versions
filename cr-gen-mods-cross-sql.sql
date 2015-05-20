@@ -4,8 +4,8 @@
 
 CREATE OR REPLACE FUNCTION devmod.gen_mods_cross_sql(
     a_dev_id integer,
-    a_ver INTEGER)
-  RETURNS VARCHAR AS
+    a_ver integer)
+  RETURNS character varying AS
 $BODY$DECLARE
   sql_cmd VARCHAR;
   cross_select VARCHAR = 'SELECT mp.mod_id, mp.dev_param_id, p.param_id';
@@ -20,6 +20,8 @@ $BODY$DECLARE
   str_aggr VARCHAR;
   cross_columns VARCHAR;
   sql_mods VARCHAR;
+  into_table VARCHAR;
+  tmp_table VARCHAR;
 BEGIN
   cross_sql := cross_select || cross_from || cross_where1 || cross_where2 || cross_where3 || cross_where4 || format(cross_where5, a_dev_id, a_ver) || cross_order;
   str_aggr := 'string_agg('' "'' || devmod.dev_param.dev_param_id || ''" integer'', '','' ORDER BY devmod.dev_param.dev_param_id)';
@@ -33,3 +35,4 @@ END;$BODY$
   COST 100;
 ALTER FUNCTION devmod.gen_mods_cross_sql(integer, integer)
   OWNER TO arc_energo;
+
