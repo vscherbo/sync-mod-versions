@@ -25,19 +25,21 @@ $BODY$DECLARE
   cross_columns VARCHAR;
   sql_mods VARCHAR;
   mod RECORD;
+  cnt INTEGER;
 BEGIN
-  a_dev_id := 85;
   cross_sql := cross_select || cross_from || cross_where1 || cross_where2 || cross_where3 || cross_where4 || format(cross_where5, a_dev_id, a_ver) || cross_order;
   str_aggr := 'string_agg('' "'' || devmod.dev_param.dev_param_id || ''" integer'', '','' ORDER BY devmod.dev_param.dev_param_id)';
   sql_cmd := format('SELECT %s FROM devmod.dev_param WHERE dev_id=%s AND version_num=%s', str_aggr, a_dev_id, a_ver);
   EXECUTE sql_cmd INTO cross_columns;
   sql_mods := 'SELECT * FROM crosstab(''' || cross_sql || '''::TEXT) AS ct(mod_id character varying,' || cross_columns || ');';
   
-  RAISE NOTICE 'sql_cmd=%', sql_cmd;
-  RAISE NOTICE 'cross_columns=%', cross_columns;
-  RAISE NOTICE 'sql_mods=%', sql_mods;
+  -- RAISE NOTICE 'sql_cmd=%', sql_cmd;
+  -- RAISE NOTICE 'cross_columns=%', cross_columns;
+  -- RAISE NOTICE 'sql_mods=%', sql_mods;
+  cnt := 1;
   FOR mod in EXECUTE sql_mods LOOP
-    RAISE NOTICE 'mod=%', mod;
+    RAISE NOTICE 'N=%, mod=%', cnt, mod;
+    cnt := cnt + 1;
   END LOOP;
     
 END;$BODY$
