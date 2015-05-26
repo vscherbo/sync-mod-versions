@@ -62,25 +62,9 @@ BEGIN
                      tmp_name_from, tmp_name_to, sql_where);
     RAISE NOTICE 'sql_join=%', sql_join;
 
-    cnt := 1;
-    FOR mod in EXECUTE sql_join LOOP
-        -- RAISE NOTICE 'N=%, mod_from=%, mod_to=%', cnt, mod.mod_id_from, mod.mod_id_to;
-        sql_update := format('UPDATE devmod.modifications m 
-            SET mod_price = mfrom.mod_price, 
-            mod_delivery_time = mfrom.mod_delivery_time,
-            dm_valuta = mfrom.dm_valuta,
-            dm_kurs = mfrom.dm_kurs
-            FROM devmod.modifications mfrom
-            WHERE 
-                mfrom.mod_id=%s AND mfrom.version_num=%s
-                AND m.mod_id=%s AND m.version_num=%s;', quote_literal(mod.mod_id_from), a_ver_from, quote_literal(mod.mod_id_to), a_ver_to);
-        RAISE NOTICE 'sql_update=%', sql_update;
-        EXECUTE sql_update;
-        cnt := cnt + 1;
-    END LOOP;
   ELSIF FALSE THEN -- вариант 2
         NULL;
-  ELSIF mods_from_cols <@  mods_to_cols THEN -- вариант 3
+  ELSIF (mods_from_cols <@  mods_to_cols) OR (mods_from_cols @>  mods_to_cols) THEN -- вариант 3,4
         sql_on := 'ON ';
         FOREACH col IN ARRAY shared_cols LOOP
             sql_on := sql_on || format('mods_from."%s"::VARCHAR=mods_to."%s"::VARCHAR AND ', col, col);
@@ -90,8 +74,27 @@ BEGIN
         sql_join := format('SELECT mods_from.mod_id AS mod_id_from, mods_to.mod_id AS mod_id_to FROM %s mods_from LEFT JOIN %s mods_to %s ORDER BY mods_from.mod_id;', 
                      tmp_name_from, tmp_name_to, sql_on);
         RAISE NOTICE 'sql_join=%', sql_join;
-  ELSIF mods_from_cols @>  mods_to_cols THEN -- вариант 4
-        NULL;      
+
+        cnt := 1;
+        FOR mod in EXECUTE sql_join LOOP
+            -- RAISE NOTICE 'N=%, mod_from=%, mod_to=%', cnt, mod.mod_id_from, mod.mod_id_to;
+            sql_update := format('UPDATE devmod.modifications m 
+                SET mod_price = mfrom.mod_price, 
+                mod_delivery_time = mfrom.mod_delivery_time,
+                dm_valuta = mfrom.dm_valuta,
+                dm_kurs = mfrom.dm_kurs
+                FROM devmod.modifications mfrom
+                WHERE 
+                    mfrom.mod_id=%s AND mfrom.version_num=%s
+                    AND m.mod_id=%s AND m.version_num=%s;', quote_literal(mod.mod_id_from), a_ver_from, quote_literal(mod.mod_id_to), a_ver_to);
+            RAISE NOTICE 'N=%, sql_update=%', cnt, sql_update;
+            /************************************************/
+            -- EXECUTE sql_update;
+            /************************************************/
+            cnt := cnt + 1;
+        END LOOP;
+  -- ELSIF mods_from_cols @>  mods_to_cols THEN -- вариант 4
+        -- NULL;      
   END IF;
 
     
